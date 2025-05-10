@@ -3,7 +3,7 @@ const app = express();
 const axios = require('axios');
 
 const VERIFY_TOKEN = 'evamats_verify'; // ← заміни на свій токен
-const FORWARD_URL = 'https://hook.eu2.make.com/kern09v193erel8ex2xxi8ag8237dtdh'; // ← твій Webhook з Make
+const FORWARD_URL = 'https://hook.eu2.make.com/1xapxaalrxhtlew81ebtmfdqsp49fpzx'; // ← твій Webhook з Make
 
 app.use(express.json());
 
