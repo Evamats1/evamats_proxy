@@ -32,15 +32,23 @@ app.post('/', async (req, res) => {
   const body = req.body;
 
   const shouldForward = body.entry?.some(entry => {
-    // messaging події (Messenger/Instagram Direct)
+    // Messenger / Instagram Direct
     if (entry.messaging) return true;
 
-    // події з feed → тільки якщо це коментар
+    // Facebook коментар
     if (entry.changes) {
       return entry.changes.some(change =>
         change.field === 'feed' &&
         change.value?.item === 'comment' &&
         change.value?.verb === 'add'
+      );
+    }
+
+    // Instagram коментар
+    if (entry.changes) {
+      return entry.changes.some(change =>
+        change.field === 'comments' &&
+        entry.object === 'instagram'
       );
     }
 
@@ -57,7 +65,7 @@ app.post('/', async (req, res) => {
       res.sendStatus(500);
     }
   } else {
-    console.log('⏭️ Skipped event (not comment add or messaging)');
+    console.log('⏭️ Skipped event (not comment or message)');
     res.sendStatus(200);
   }
 });
