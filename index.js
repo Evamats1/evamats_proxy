@@ -31,12 +31,23 @@ app.get('/', (req, res) => {
 app.post('/', async (req, res) => {
   const body = req.body;
 
-  const isMessaging = body.entry?.some(entry => entry.messaging);
-  const isComment = body.entry?.some(entry =>
-    entry.changes?.some(change => change.field === 'feed' && change.value?.item === 'comment')
-  );
+  const shouldForward = body.entry?.some(entry => {
+    // messaging події (Messenger/Instagram Direct)
+    if (entry.messaging) return true;
 
-  if (isMessaging || isComment) {
+    // події з feed → тільки якщо це коментар
+    if (entry.changes) {
+      return entry.changes.some(change =>
+        change.field === 'feed' &&
+        change.value?.item === 'comment' &&
+        change.value?.verb === 'add'
+      );
+    }
+
+    return false;
+  });
+
+  if (shouldForward) {
     try {
       await axios.post(FORWARD_URL, body);
       console.log('✅ Forwarded to Make');
@@ -46,8 +57,8 @@ app.post('/', async (req, res) => {
       res.sendStatus(500);
     }
   } else {
-    console.log('⏭️ Skipped event (not comment or messaging)');
-    res.sendStatus(200); // still respond with 200 so FB doesn't retry
+    console.log('⏭️ Skipped event (not comment add or messaging)');
+    res.sendStatus(200);
   }
 });
 
