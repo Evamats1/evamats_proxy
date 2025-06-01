@@ -29,12 +29,25 @@ app.get('/', (req, res) => {
 
 // POST — реальні повідомлення (пересилаємо в Make)
 app.post('/', async (req, res) => {
-  try {
-    await axios.post(FORWARD_URL, req.body);
-    res.sendStatus(200);
-  } catch (err) {
-    console.error(err);
-    res.sendStatus(500);
+  const body = req.body;
+
+  const isMessaging = body.entry?.some(entry => entry.messaging);
+  const isComment = body.entry?.some(entry =>
+    entry.changes?.some(change => change.field === 'feed' && change.value?.item === 'comment')
+  );
+
+  if (isMessaging || isComment) {
+    try {
+      await axios.post(FORWARD_URL, body);
+      console.log('✅ Forwarded to Make');
+      res.sendStatus(200);
+    } catch (err) {
+      console.error('❌ Error forwarding to Make:', err.message);
+      res.sendStatus(500);
+    }
+  } else {
+    console.log('⏭️ Skipped event (not comment or messaging)');
+    res.sendStatus(200); // still respond with 200 so FB doesn't retry
   }
 });
 
