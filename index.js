@@ -37,24 +37,22 @@ app.post('/', async (req, res) => {
 
     // Facebook коментар
     if (entry.changes) {
-      return entry.changes.some(change =>
-        change.field === 'feed' &&
-        change.value?.item === 'comment' &&
-        change.value?.verb === 'add'
-      );
-    }
+    const isFacebookComment = entry.changes.some(change =>
+      change.field === 'feed' &&
+      change.value?.item === 'comment' &&
+      change.value?.verb === 'add'
+    );
 
-    // Instagram коментар
-    if (entry.changes) {
-      return entry.changes.some(change =>
-        change.field === 'comments' &&
-        entry.object === 'instagram'
-      );
-    }
+    const isInstagramComment = entry.changes.some(change =>
+      change.field === 'comments' &&
+      entry.object === 'instagram'
+    );
 
-    return false;
-  });
+    return isFacebookComment || isInstagramComment;
+  }
 
+  return false;
+});
   if (shouldForward) {
     try {
       await axios.post(FORWARD_URL, body);
