@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
 // POST — реальні повідомлення (пересилаємо в Make)
 app.post('/', async (req, res) => {
   const body = req.body;
-
+console.log(JSON.stringify(req.body, null, 2))
   const shouldForward = body.entry?.some(entry => {
     // Messenger / Instagram Direct
     if (entry.messaging) return true;
