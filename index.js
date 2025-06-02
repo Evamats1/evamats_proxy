@@ -30,36 +30,30 @@ app.get('/', (req, res) => {
 // POST — реальні повідомлення (пересилаємо в Make)
 app.post('/', async (req, res) => {
   const body = req.body;
-console.log(JSON.stringify(req.body, null, 2))
+
   const shouldForward = body.entry?.some(entry => {
-    // Messenger / Instagram Direct
     if (entry.messaging) return true;
 
-    // Facebook коментар
-    if (entry.changes) {
-    const isFacebookComment = entry.changes.some(change =>
+    const facebookComment = entry.changes?.some(change =>
       change.field === 'feed' &&
       change.value?.item === 'comment' &&
       change.value?.verb === 'add'
     );
 
-    const isInstagramComment = entry.changes.some(change =>
+    const instagramComment = entry.changes?.some(change =>
       change.field === 'comments' &&
-      entry.object === 'instagram'
+      body.object === 'instagram'
     );
 
-    return isFacebookComment || isInstagramComment;
-  }
+    return facebookComment || instagramComment;
+  });
 
-  return false;
-});
   if (shouldForward) {
     try {
       await axios.post(FORWARD_URL, body);
-      console.log('✅ Forwarded to Make');
       res.sendStatus(200);
     } catch (err) {
-      console.error('❌ Error forwarding to Make:', err.message);
+      console.error('❌ Error forwarding to Make:', err);
       res.sendStatus(500);
     }
   } else {
