@@ -31,15 +31,28 @@ app.get('/', (req, res) => {
 app.post('/', async (req, res) => {
   const body = req.body;
 
-  const shouldForward = body.entry?.some(entry => {
-    if (entry.messaging) return true;
+  let isImageMessage = false;
 
+  const shouldForward = body.entry?.some(entry => {
+    // Messenger events (тільки повідомлення, текст або фото)
+    if (entry.messaging) {
+      return entry.messaging.some(m => {
+        if (m.message?.attachments?.some(att => att.type === 'image')) {
+          isImageMessage = true; // ← це фото
+          return true;
+        }
+        return !!m.message?.text; // тільки текст
+      });
+    }
+
+    // Facebook коментарі
     const facebookComment = entry.changes?.some(change =>
       change.field === 'feed' &&
       change.value?.item === 'comment' &&
       change.value?.verb === 'add'
     );
 
+    // Instagram коментарі
     const instagramComment = entry.changes?.some(change =>
       change.field === 'comments' &&
       body.object === 'instagram'
@@ -51,6 +64,11 @@ app.post('/', async (req, res) => {
   if (shouldForward) {
     try {
       await axios.post(FORWARD_URL, body);
+      if (isImageMessage) {
+        console.log('📷 Forwarded image message');
+      } else {
+        console.log('✅ Forwarded text/comment');
+      }
       res.sendStatus(200);
     } catch (err) {
       console.error('❌ Error forwarding to Make:', err);
